@@ -1,11 +1,14 @@
-import React, { useState } from 'react'
-import login from '../assets/images/login.png'
-import { Form,FloatingLabel } from 'react-bootstrap'
+import React, { useContext, useState } from 'react'
+
+import { Form,FloatingLabel,Spinner } from 'react-bootstrap'
 import { Link, useNavigate } from 'react-router-dom'
-import { registerAPI } from '../services/allAPI'
+import { loginAPI, registerAPI } from '../services/allAPI'
+import { tokenContext } from '../contexts/TokenAuth'
 
 const Auth = ({insideRegister}) => {
+  const {authorisedUser,setAuthorisedUser}=useContext(tokenContext)
   const navigate = useNavigate()
+  const [isLogin,setIsLogin] = useState(false)
   const [userInput,setUserInput]= useState({
     username:"",email:"",password:""
   })
@@ -24,6 +27,42 @@ const Auth = ({insideRegister}) => {
         }
         else {
            if(result.response.status==406){
+            alert(result.response.data)
+            setUserInput({username:"",email:"",password:""})
+           }
+        }
+      }catch(err){
+        console.log(err);
+        
+      }
+    }
+    else{
+      alert("Please fill the form completely !!!")
+    }
+  }
+
+  // login
+
+  const login = async(e)=>{
+    e.preventDefault()
+    if(userInput.password && userInput.email   ){
+      // api call
+      try{
+       const result = await loginAPI(userInput)
+
+        if(result.status==200){
+          sessionStorage.setItem("user",JSON.stringify(result.data.user))
+          sessionStorage.setItem("token",result.data.token)
+          setIsLogin(true)
+          setAuthorisedUser(true)
+          setTimeout(() => {
+            navigate("/")
+            setUserInput({username:"",email:"",password:""})
+            setIsLogin(false)
+          }, 2000);
+        }
+        else {
+           if(result.response.status==404){
             alert(result.response.data)
             setUserInput({username:"",email:"",password:""})
            }
@@ -78,7 +117,9 @@ const Auth = ({insideRegister}) => {
                   </div>
                   :
                   <div className="mt-3">
-                  <button className='btn btn-primary mb-2'>Login</button>
+                  <button className='btn btn-primary mb-2' onClick={login}>Login
+                  {isLogin && <Spinner animation="border" variant="light" />}
+                  </button>
                   <p>New User ? Please Click Here To <Link to={'/register'}>Register</Link></p>
                 </div>
                 }

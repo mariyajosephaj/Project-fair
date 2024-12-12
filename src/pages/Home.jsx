@@ -1,10 +1,51 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import landingImage from'../assets/images/landingImage.jpg'
 import ProjectCard from '../components/ProjectCard'
 import { Card } from 'react-bootstrap'
+import { homeProjectsAPI } from '../services/allAPI'
 
 const Home = () => {
+  const navigate = useNavigate()
+  const [homeProjects,setHomeProjects] = useState([])
+  const [isLogin,setIsLogin] = useState(false)
+  console.log(homeProjects);
+  
+  useEffect(()=>{
+    getHomeProjects()
+   if(sessionStorage.getItem("token")){
+    setIsLogin(true)
+   }else{
+    setIsLogin(false)
+   }
+
+  },[])
+
+  const getHomeProjects=async()=>{
+    try{
+        const result = await homeProjectsAPI()
+        console.log(result);
+        if(result.status==200){
+          setHomeProjects(result.data)
+        }
+        
+    }
+    catch(err){
+        console.log(err);
+        
+    }
+
+  }
+
+  const handleNavigateToProjects= ()=>{
+    // user logined
+    if(sessionStorage.getItem("token")){
+      navigate('/projects')
+    }
+    else{
+      alert("Please login to view more projects")
+    }
+  }
   return (
     <>
     {/* landing */}
@@ -14,7 +55,11 @@ const Home = () => {
           <div className="col-lg-6">
             <h1 style={{fontSize:'80px'}}><i className='fa-brands fa-docker'></i>Project Fair</h1>
             <p>One Stop Destination for all Software Development Projects. Where User can add and manage their projects. As well as access all projects available in our website... What are you waiting for!!!</p>
-            <Link to={'/login'} className='btn btn-warning'>STARTS TO EXPLORE</Link>
+            {
+              isLogin?
+              <Link to={'/dashboard'} className='btn btn-warning'>MANAGE YOUR PROJECTS</Link>
+              :
+              <Link to={'/login'} className='btn btn-warning'>STARTS TO EXPLORE</Link>}
           </div>
           <div className="col-lg-6">
             <img className='img-fluid' src={landingImage} alt="" />
@@ -28,12 +73,16 @@ const Home = () => {
       <h1 className="mb-5">Explore Our Projects</h1>
       <marquee>
         <div className="d-flex">
-          <div className="me-5">
-            <ProjectCard/>
+          {
+            homeProjects?.map(project=>(
+              <div className="me-5">
+            <ProjectCard displayData={project}/>
           </div>
+            ))
+          }
         </div>
       </marquee>
-      <button className="btn btn-link mt-5">Click Here To View More Projects...</button>
+      <button onClick={handleNavigateToProjects} className="btn btn-link mt-5">Click Here To View More Projects...</button>
     </div>
     {/* testimonials */}
     <div className="d-flex justify-content-center align-items-center my-3 flex-column">
